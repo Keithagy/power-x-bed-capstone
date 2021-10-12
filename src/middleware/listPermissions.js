@@ -16,7 +16,7 @@ module.exports = (listService) => {
                     return next();
                 }
                 return res.status(403).send('Forbidden');
-            case 'PUT' || 'DELETE':
+            case 'POST' || 'PUT' || 'DELETE':
                 // req.uid must be in todoList.creator
                 const createdListIds = await listService.getListIdsCreatedByUser(uid);
                 if (createdListIds.includes(params.listId)) {

@@ -6,7 +6,9 @@ let pool = new Pool({
 
 const db = {
     ...require('./users')(pool),
-};
+    ...require('./list')(pool),
+    ...require('./todo')(pool),
+    ...require('./listAccessor')(pool),};
 
 db.initialise = async () => {
     await pool.query(`
@@ -44,14 +46,23 @@ CREATE TABLE IF NOT EXISTS Todos (
 `);
 };
 
-db.clearItemsTables = async () => {
-    await pool.query('DELETE FROM Items');
-    await pool.query('ALTER SEQUENCE items_id_seq RESTART');
+db.clearUsersTables = async () => {
+  await pool.query('DELETE FROM Users');
+  await pool.query('ALTER SEQUENCE users_id_seq RESTART');
 };
 
-db.clearUsersTables = async () => {
-    await pool.query('DELETE FROM Users');
-    await pool.query('ALTER SEQUENCE users_id_seq RESTART');
+db.clearListsTables = async () => {
+    await pool.query('DELETE FROM Lists');
+    await pool.query('ALTER SEQUENCE lists_id_seq RESTART');
+};
+
+db.clearAccessibleToTables = async () => {
+  await pool.query('DELETE FROM AccessibleTo');
+};
+
+db.clearTodosTables = async () => {
+  await pool.query('DELETE FROM Todos');
+  await pool.query('ALTER SEQUENCE todos_id_seq RESTART');
 };
 
 db.end = async () => {

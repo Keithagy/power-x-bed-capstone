@@ -45,5 +45,13 @@ module.exports = (db) => {
         }
     };
 
+    service.getUidByEmail = (email) => {
+        const user = await db.findUserByEmail(email);
+        if (!user) {
+            return null;
+        }
+        return user.id;
+    };
+
     return service;
 };

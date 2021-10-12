@@ -1,7 +1,7 @@
 const express = require('express');
 const List = require('../models/list');
 
-module.exports = (listService) => {
+module.exports = (listService, amqpService) => {
     const router = express.Router();
 
     // GET with no listId: get all lists accessible to user
@@ -24,6 +24,17 @@ module.exports = (listService) => {
         const resolvedList = await listService.getResolvedList(listId);
 
         res.status(200).json(resolvedList);
+    });
+
+    // POST with listId: add new user to be able to access the specified TODO list
+    router.post('/:listId', async (req, res) => {
+        const { listId } = req.params;
+        const { newAccessEmail } = req.body;
+
+        await amqpService.publishNewAccess(listId, newAccessEmail);
+        res.status(200).send(
+            `User with email ${newAccessEmail} has been queued for granting access to ${listId}`
+        );
     });
 
     // POST: create new list
@@ -75,8 +86,10 @@ module.exports = (listService) => {
 
         listService
             .deleteList(listId)
-            .then((confirmation) =>
-                confirmation && res.status(204).send(`List ${listId} successfully deleted`)
+            .then(
+                (confirmation) =>
+                    confirmation &&
+                    res.status(204).send(`List ${listId} successfully deleted`)
             )
             .catch((err) => res.status(err.status).send(err.message));
     });

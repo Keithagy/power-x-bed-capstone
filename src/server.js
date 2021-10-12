@@ -8,7 +8,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // *	[Auth-ed] CRUD endpoints for TODO lists:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// *	A Create endpoint with the list being created belongs to and can only be accessed by the creator or anyone added to access the list 
+// *	A Create endpoint with the list being created belongs to and can only be accessed by the creator or anyone added to access the list
 // !        Use uid from request (added by authMiddleWare)
 //          POST /lists
 
@@ -20,7 +20,7 @@
 // !        Permissioned: req.uid must be in todoList.creator or todoList.accessibleTo
 //          GET /lists/{listId}
 
-// *	A PUT/PATCH endpoint to update a TODO-list’s title by its ID based on who the current authenticated user is. 
+// *	A PUT/PATCH endpoint to update a TODO-list’s title by its ID based on who the current authenticated user is.
 // *    Returns 403 forbidden with a proper error JSON object if the user cannot access the list
 // !        Permissioned: req.uid must be in todoList.creator
 //          PUT /lists/{listId}
@@ -32,7 +32,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // *	[Auth-ed] An endpoint to add someone by email to be able to access a TODO list:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// *	This operation should be processed in an event-driven manner: 
+// *	This operation should be processed in an event-driven manner:
 // *    The endpoint would immediate respond with an appropriate 200 JSON response after putting an event into a message broker
 // *    (Recommended rabbitmq as there’s a free plan)
 //  	    There will be a separate worker process that would consume the message and:
@@ -58,26 +58,39 @@
 //          DELETE /todos/{todoId}
 
 require('dotenv').config();
+
 const App = require('./app');
 const Router = require('./routes/index');
-const AuthMiddleware = require('./middleware/auth')
+const AuthMiddleware = require('./middleware/auth');
 const AuthService = require('./services/auth');
-const listPermissions = require('./middleware/listPermissions')
-const todoPermissions = require('./middleware/todoPermissions')
-const permissions = {listPermissions, todoPermissions}
-const listService = require('./services/list')
-const todoService = require('./services/todo')
+const AmqpService = require('./services/amqp');
+const TodoService = require('./services/todo');
+const ListService = require('./services/list');
+
 const db = require('./db');
 (async () => await db.initialise())();
 
+const amqpService = AmqpService();
 const authService = AuthService(db);
-const authMiddleware = AuthMiddleware(authService)
-const router = Router(authMiddleware, authService, permissions, listService, todoService);
+const todoService = TodoService(db);
+const listService = ListService(db, todoService);
+
+const authMiddleware = AuthMiddleware(authService);
+const listPermissions = require('./middleware/listPermissions');
+const todoPermissions = require('./middleware/todoPermissions');
+const permissions = { listPermissions, todoPermissions };
+
+const router = Router(
+    authMiddleware,
+    authService,
+    permissions,
+    listService,
+    todoService,
+    amqpService
+);
 const app = App(router);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);
 });
-
-// (authMiddleware, authService, permissions, listService, todoService)
