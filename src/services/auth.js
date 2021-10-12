@@ -2,7 +2,6 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const User = require('../models/user');
 
-// How does this file know about the reference of process.env?
 const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS);
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRY = parseInt(process.env.JWT_EXPIRY);

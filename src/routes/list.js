@@ -1,6 +1,5 @@
 const express = require('express');
 const List = require('../models/list');
-const { v4: uuidv4 } = require('uuid');
 
 module.exports = (listService) => {
     const router = express.Router();
@@ -32,7 +31,6 @@ module.exports = (listService) => {
         const { title } = req.body;
 
         const newList = new List({
-            id: uuidv4(),
             creator: req.uid,
             accessibleTo: [],
             title,
@@ -77,8 +75,8 @@ module.exports = (listService) => {
 
         listService
             .deleteList(listId)
-            .then(() =>
-                res.status(204).send(`List ${listId} successfully deleted`)
+            .then((confirmation) =>
+                confirmation && res.status(204).send(`List ${listId} successfully deleted`)
             )
             .catch((err) => res.status(err.status).send(err.message));
     });
