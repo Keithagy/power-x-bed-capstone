@@ -1,11 +1,12 @@
 const express = require('express');
 const Todo = require('../models/todo');
+const todoPermissions = require('../middleware/todoPermissions');
 
 module.exports = (todoService) => {
     const router = express.Router();
 
     // POST: create new todo
-    router.post('/', async (req, res) => {
+    router.post('/todos', todoPermissions(todoService), async (req, res) => {
         const { parent, topic, body } = req.body;
 
         const newTodo = new Todo({
@@ -28,36 +29,44 @@ module.exports = (todoService) => {
     });
 
     // PUT: update todo attributes
-    router.put('/:todoId', async (req, res) => {
-        const { parent, topic, body } = req.body;
-        const { todoId } = req.params;
+    router.put(
+        '/todos/:todoId',
+        todoPermissions(todoService),
+        async (req, res) => {
+            const { parent, topic, body } = req.body;
+            const { todoId } = req.params;
 
-        if (!topic || (isNaN(parent) && !parent) || !body) {
-            res.status(400).send('Bad request, topic, title and parent cannot be null.');
+            if (!topic || (isNaN(parent) && !parent) || !body) {
+                res.status(400).send(
+                    'Bad request, topic, title and parent cannot be null.'
+                );
+            }
+            todoService
+                .updateTodo(todoId, { parent, topic, body })
+                .then(() =>
+                    res.status(204).send(`Todo ${todoId} successfully updated`)
+                )
+                .catch((err) => {
+                    return res.status(err.status).send(err.message);
+                });
         }
-        todoService
-            .updateTodo(todoId, { parent, topic, body })
-            .then(() =>
-                res
-                    .status(204)
-                    .send(
-                        `Todo ${todoId} successfully updated`
-                    )
-            )
-            .catch((err) => res.status(err.status).send(err.message));
-    });
+    );
 
     // DELETE: delete todo
-    router.delete('/:todoId', async (req, res) => {
-        const { todoId } = req.params;
+    router.delete(
+        '/todos/:todoId',
+        todoPermissions(todoService),
+        async (req, res) => {
+            const { todoId } = req.params;
 
-        todoService
-            .deleteTodo(todoId)
-            .then(() =>
-                res.status(204).send(`Todo ${todoId} successfully deleted`)
-            )
-            .catch((err) => res.status(err.status).send(err.message));
-    });
+            todoService
+                .deleteTodo(todoId)
+                .then(() =>
+                    res.status(204).send(`Todo ${todoId} successfully deleted`)
+                )
+                .catch((err) => res.status(err.status).send(err.message));
+        }
+    );
 
     return router;
 };

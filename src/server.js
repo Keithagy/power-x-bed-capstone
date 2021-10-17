@@ -16,7 +16,8 @@
 // !        Use uid from request (added by authMiddleWare)
 //          GET /lists
 
-// *	A GET a single TODO-list by its ID endpoint that would return the corresponding TODO-list together with all of the items in the list based on // *    who the current authenticated user is. Returns 403 forbidden with a proper error JSON object if the user cannot access the list
+// *	A GET a single TODO-list by its ID endpoint that would return the corresponding TODO-list together with all of the items in the list based on 
+// *    who the current authenticated user is. Returns 403 forbidden with a proper error JSON object if the user cannot access the list
 // !        Permissioned: req.uid must be in todoList.creator or todoList.accessibleTo
 //          GET /lists/{listId}
 
@@ -73,17 +74,13 @@ const db = require('./db');
 const amqpService = AmqpService();
 const authService = AuthService(db);
 const todoService = TodoService(db);
-const listService = ListService(db, todoService);
+const listService = ListService(db);
 
 const authMiddleware = AuthMiddleware(authService);
-const listPermissions = require('./middleware/listPermissions');
-const todoPermissions = require('./middleware/todoPermissions');
-const permissions = { listPermissions, todoPermissions };
 
 const router = Router(
     authMiddleware,
     authService,
-    permissions,
     listService,
     todoService,
     amqpService

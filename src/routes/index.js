@@ -1,8 +1,13 @@
 const express = require('express');
 
-module.exports = (authMiddleware, authService, permissions, listService, todoService, amqpService) => {
+module.exports = (
+    authMiddleware,
+    authService,
+    listService,
+    todoService,
+    amqpService
+) => {
     const router = express.Router();
-    const {listPermissions, todoPermissions} = permissions
 
     router.get('/', (req, res, next) => {
         res.send('BED Capstone!');
@@ -15,8 +20,8 @@ module.exports = (authMiddleware, authService, permissions, listService, todoSer
     router.use(authMiddleware);
 
     // Different permission middlewares for each of the routes
-    router.use('/lists', [listPermissions, require('./list')(listService, amqpService)])
-    router.use('/todos', [todoPermissions, require('./todo')(todoService)])
+    router.use('/', require('./list')(listService, amqpService));
 
+    router.use('/', require('./todo')(todoService));
     return router;
 };

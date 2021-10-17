@@ -1,16 +1,23 @@
 const express = require('express');
 const List = require('../models/list');
+const listPermissions = require('../middleware/listPermissions');
 
 module.exports = (listService, amqpService) => {
     const router = express.Router();
 
     // GET with no listId: get all lists accessible to user
-    router.get('/', async (req, res) => {
+    router.get('/lists', listPermissions(listService), async (req, res) => {
         const { uid } = req;
         const listIdsAccessibleToUser =
             await listService.getListIdsAccessibleToUser(uid);
+
+        const listIdsCreatedByUser = await listService.getListIdsCreatedByUser(
+            uid
+        );
+        const finalList = listIdsAccessibleToUser.concat(listIdsCreatedByUser);
+
         const resolvedLists = await Promise.all(
-            listIdsAccessibleToUser.map((listId) =>
+            finalList.map(({ id: listId }) =>
                 listService.getResolvedList(listId)
             )
         );
@@ -19,7 +26,7 @@ module.exports = (listService, amqpService) => {
     });
 
     // GET with listId: get particular list
-    router.get('/:listId', async (req, res) => {
+    router.get('/lists/:listId', listPermissions(listService), async (req, res) => {
         const { listId } = req.params;
         const resolvedList = await listService.getResolvedList(listId);
 
@@ -27,7 +34,7 @@ module.exports = (listService, amqpService) => {
     });
 
     // POST with listId: add new user to be able to access the specified TODO list
-    router.post('/:listId', async (req, res) => {
+    router.post('/lists/:listId', listPermissions(listService), async (req, res) => {
         const { listId } = req.params;
         const { newAccessEmail } = req.body;
 
@@ -38,7 +45,7 @@ module.exports = (listService, amqpService) => {
     });
 
     // POST: create new list
-    router.post('/', async (req, res) => {
+    router.post('/lists', listPermissions(listService), async (req, res) => {
         const { title } = req.body;
 
         const newList = new List({
@@ -57,11 +64,13 @@ module.exports = (listService, amqpService) => {
                         `New list ${title} successfully created for user ${req.uid}`
                     )
             )
-            .catch((err) => res.status(err.status).send(err.message));
+            .catch((err) => {
+                res.status(err.status).send(err.message);
+            });
     });
 
     // PUT: update list title
-    router.put('/:listId', async (req, res) => {
+    router.put('/lists/:listId', listPermissions(listService), async (req, res) => {
         const { title } = req.body;
         const { listId } = req.params;
 
@@ -81,7 +90,7 @@ module.exports = (listService, amqpService) => {
     });
 
     // DELETE: delete list
-    router.delete('/:listId', async (req, res) => {
+    router.delete('/lists/:listId', listPermissions(listService), async (req, res) => {
         const { listId } = req.params;
 
         listService

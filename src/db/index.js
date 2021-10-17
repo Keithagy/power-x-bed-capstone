@@ -8,7 +8,8 @@ const db = {
     ...require('./users')(pool),
     ...require('./list')(pool),
     ...require('./todo')(pool),
-    ...require('./listAccessor')(pool),};
+    ...require('./listAccessor')(pool),
+};
 
 db.initialise = async () => {
     await pool.query(`
@@ -18,6 +19,7 @@ db.initialise = async () => {
       password_hash VARCHAR(100) NOT NULL
     )
   `);
+
     await pool.query(`
   CREATE TABLE IF NOT EXISTS Lists (
     id SERIAL PRIMARY KEY,
@@ -26,6 +28,7 @@ db.initialise = async () => {
     FOREIGN KEY (creator) REFERENCES Users(id) ON DELETE CASCADE
   )
 `);
+
     await pool.query(`
   CREATE TABLE IF NOT EXISTS AccessibleTo (
     listId INTEGER NOT NULL,
@@ -34,6 +37,7 @@ db.initialise = async () => {
     FOREIGN KEY (accesibleTo) REFERENCES Users(id) ON DELETE CASCADE
   )
 `);
+
     await pool.query(`
 CREATE TABLE IF NOT EXISTS Todos (
   id SERIAL PRIMARY KEY,
@@ -41,14 +45,14 @@ CREATE TABLE IF NOT EXISTS Todos (
   topic VARCHAR(100) NOT NULL,
   body VARCHAR(100),
   completed BOOLEAN NOT NULL DEFAULT FALSE,
-  FOREIGN KEY (parent) REFERENCES Lists(id) ON DELETE CASCADE,
+  FOREIGN KEY (parent) REFERENCES Lists(id) ON DELETE CASCADE
 )
 `);
 };
 
 db.clearUsersTables = async () => {
-  await pool.query('DELETE FROM Users');
-  await pool.query('ALTER SEQUENCE users_id_seq RESTART');
+    await pool.query('DELETE FROM Users');
+    await pool.query('ALTER SEQUENCE users_id_seq RESTART');
 };
 
 db.clearListsTables = async () => {
@@ -57,12 +61,12 @@ db.clearListsTables = async () => {
 };
 
 db.clearAccessibleToTables = async () => {
-  await pool.query('DELETE FROM AccessibleTo');
+    await pool.query('DELETE FROM AccessibleTo');
 };
 
 db.clearTodosTables = async () => {
-  await pool.query('DELETE FROM Todos');
-  await pool.query('ALTER SEQUENCE todos_id_seq RESTART');
+    await pool.query('DELETE FROM Todos');
+    await pool.query('ALTER SEQUENCE todos_id_seq RESTART');
 };
 
 db.end = async () => {

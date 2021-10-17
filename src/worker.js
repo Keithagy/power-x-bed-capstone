@@ -1,7 +1,8 @@
 require('dotenv').config();
 const amqplib = require('amqplib');
 
-const db = require('./db')(async () => await db.initialise())();
+const db = require('./db');
+(async () => await db.initialise())();
 
 const listAccessorService = require('./services/listAccessor');
 const listAccessorServiceInstance = listAccessorService(db);
@@ -15,8 +16,9 @@ const QUEUE = 'NewAccess';
 async function main() {
     const client = await amqplib.connect(URL);
     const channel = await client.createChannel();
+
     await channel.assertQueue(QUEUE);
-    channel.consume(QUEUE, (msg) => {
+    channel.consume(QUEUE, async (msg) => {
         const { listId, newAccessEmail } = JSON.parse(msg.content);
         console.log('Received:', listId, newAccessEmail);
         const newAccessUid = await authServiceInstance.getUidByEmail(
@@ -38,6 +40,7 @@ async function main() {
                 channel.nack(msg);
             });
     });
+
 }
 
 main().catch((err) => {

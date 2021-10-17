@@ -39,11 +39,29 @@ module.exports = (pool) => {
     };
 
     db.getListById = async (listId) => {
-        const result = await pool.query('SELECT * FROM Lists WHERE id = $1', [
+        const listInfo = await pool.query('SELECT * FROM Lists WHERE id = $1', [
             listId,
         ]);
 
-        return new List({ ...result.rows[0] });
+        const todosForList = await pool.query(
+            'SELECT * FROM Todos WHERE parent = $1',
+            [listId]
+        );
+        const listAccessibleTo = await pool.query(
+            'SELECT * FROM AccessibleTo WHERE listId = $1',
+            [listId]
+        );
+
+        return new List({
+            ...listInfo.rows[0],
+            todos: todosForList.rows.map((todo) => ({
+                todoId: todo.id,
+                topic: todo.topic,
+                body: todo.body,
+                completed: todo.completed,
+            })),
+            accessibleTo: listAccessibleTo.rows.map(ele=>ele.accesibleto),
+        });
     };
 
     db.changeListTitle = async (listId, newTitle) => {
@@ -55,7 +73,9 @@ module.exports = (pool) => {
     };
 
     db.deleteList = async (listId) => {
-        const result = await pool.query('DELETE FROM Lists WHERE id=$1', [listId]);
+        const result = await pool.query('DELETE FROM Lists WHERE id=$1', [
+            listId,
+        ]);
         return result.rowCount > 0;
     };
 

@@ -45,7 +45,7 @@ module.exports = (db) => {
         }
     };
 
-    service.getUidByEmail = (email) => {
+    service.getUidByEmail = async (email) => {
         const user = await db.findUserByEmail(email);
         if (!user) {
             return null;

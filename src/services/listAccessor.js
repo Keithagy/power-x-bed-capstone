@@ -2,7 +2,7 @@ module.exports = (db) => {
     const service = {};
 
     //addAccessor(listId: listId, uid: uid) -> bool
-    service.addAccessor = (listId, uid) => {
+    service.addAccessor = async (listId, uid) => {
         const accessorIds = await db.addAccessor(listId, uid);
         if (!accessorIds) {
             // db call returned an error because invalid uid
